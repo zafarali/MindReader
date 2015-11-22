@@ -60,7 +60,6 @@ def data_streamer(mode='train', num_sets='all'):
 			for series in train_series:
 				yield load_raw_train_data(subject_id=participant, series_id=series)
 				loaded += 1
-				print loaded
 				if num_sets != 'all' and num_sets < loaded: break
 			if num_sets != 'all' and num_sets < loaded: break
 
@@ -69,7 +68,6 @@ def data_streamer(mode='train', num_sets='all'):
 			for series in test_series:
 				yield load_raw_test_data(subject_id=participant, series_id=series)
 				loaded += 1 
-				print loaded
 				if num_sets != 'all' and num_sets < loaded: break
 			if num_sets != 'all' and num_sets < loaded: break
 			
