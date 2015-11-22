@@ -40,7 +40,7 @@ def load_raw_test_data(subject_id=1,series_id=9):
 	return data.values[:,1:]
 
 
-def data_streamer(mode='train'):
+def data_streamer(mode='train', num_sets='all'):
 	"""
 		Generator that streams data according to how it is best necessary
 		Use as follows:
@@ -54,14 +54,24 @@ def data_streamer(mode='train'):
 	participants = xrange(1,13) # 12 subjects
 	train_series = xrange(1,9) # 8 series in train
 	test_series = xrange(9,11) # 2 series in test
+	loaded = 0
 	if mode == 'train':
 		for participant in participants:
 			for series in train_series:
 				yield load_raw_train_data(subject_id=participant, series_id=series)
+				loaded += 1
+				print loaded
+				if num_sets != 'all' and num_sets < loaded: break
+			if num_sets != 'all' and num_sets < loaded: break
+
 	elif mode == 'test':
 		for participant in participants:
 			for series in test_series:
 				yield load_raw_test_data(subject_id=participant, series_id=series)
+				loaded += 1 
+				print loaded
+				if num_sets != 'all' and num_sets < loaded: break
+			if num_sets != 'all' and num_sets < loaded: break
 			
 
 
