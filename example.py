@@ -10,6 +10,7 @@ for label_name in IOutils.LABEL_NAMES:
 	# each label will have its own logistic regressor
     LRs[label_name] = LogisticRegression()
 
+print('Initialized logistic regressors')
 
 
 # Load training data
@@ -19,13 +20,13 @@ train_data = IOutils.data_streamer(mode='train', num_patients=3, num_series=1)
 
 # obtain a validation set
 X_valid, Y_valid = train_data.next()
-
+print('Validation set loaded')
 
 # train over remaining data sets one at a time
 for X,Y in train_data:
     for i, label_name in enumerate(IOutils.LABEL_NAMES):
         LRs[label_name].fit(X, Y[:,i])
-
+print('classifiers trained')
 
 
 # validate the classifiers
