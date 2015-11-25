@@ -8,11 +8,12 @@ import os
 import re
 import numpy as np
 import pandas as pd
+import random
 from scipy import signal
 from time import time
 
-#-----------------------
-def preprocess_sample(X_raw, normalize=True, filters=utils.FREQUENCY_BANDS.keys(), window_size=300, downsample=1):
+#---------------------------
+def preprocess_sample(X_raw, normalize=True, filters=utils.FREQUENCY_BANDS.keys(), window_size=300, downsample=1, shuffle=True):
 
     if normalize:
         X_raw = utils.normalize(X_raw)
@@ -60,5 +61,4 @@ if __name__ == '__main__':
     
     time_msg = "Time elapsed: " + "%.3f"%(time()-t0) + " seconds"
     print(time_msg)
-
 
