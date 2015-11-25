@@ -1,8 +1,9 @@
 import numpy as np
+import random
 from scipy import signal
 import preprocess_utils as utils
 
-def preprocess_sample(X_raw, normalize=True, filters=utils.FREQUENCY_BANDS.keys(), window_size=300, downsample=1):
+def preprocess_sample(X_raw, normalize=True, filters=utils.FREQUENCY_BANDS.keys(), window_size=300, downsample=1, shuffle=True):
 
 	if normalize:
 		X_raw = utils.normalize(X_raw)
@@ -16,5 +17,8 @@ def preprocess_sample(X_raw, normalize=True, filters=utils.FREQUENCY_BANDS.keys(
 			low, high = utils.FREQUENCY_BANDS[filter_name]
 			data_point.extend(np.mean(utils.butter_apply(windowed_data, low, high), axis=0).tolist())
 		features_extracted.append(data_point)
+
+	if shuffle:
+		random.shuffle(features_extracted)
 
 	return np.array(features_extracted)
