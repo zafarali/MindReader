@@ -41,14 +41,20 @@ def principal_frequencies(data):
 #-----------------------
 def preprocess_all(mode='train'):
     """Computes and saves the spectrographs of all input data"""
-    csvlist = io.get_file_list(mode='train', fullpath=True)
+    csvlist = io.get_file_list(mode=mode, fullpath=True)
 
     for fname in csvlist:
         data = pd.read_csv(fname).values[:,1:]
 
-        f,t,sxx = utils.spectrogram(data, window='boxcar')
-        print(sxx.shape)
-        exit()
+        # Get the spectrograph
+        f,t,sxx = utils.spectrogram(data, window='boxcar', nperseg=256)
+        tmp = f
+        new_fname = fname[:-4] + '_spectro'
+        np.save(new_fname, sxx)
+
+    datadir = io.get_datadir(mode=mode)
+    np.save(datadir + 'spectro_freq', f)
+    np.save(datadir + 'spectro_time', t)
 
 
 
