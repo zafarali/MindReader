@@ -2,10 +2,41 @@
 # for handling data
 import numpy as np
 import pandas as pd
+import os
+import re
 
 
 RAW_CHANNEL_NAMES = ['Fp1','Fp2','F7','F3','Fz','F4','F8','FC5','FC1','FC2','FC6','T7','C3','Cz','C4','T8','TP9','CP5','CP1','CP2','CP6','TP10','P7','P3','Pz','P4','P8','PO9','O1','Oz','O2','PO10']
 LABEL_NAMES = ['HandStart','FirstDigitTouch','BothStartLoadPhase','LiftOff','Replace','BothReleased']
+
+
+
+def get_datadir(mode='train'):
+	"""returns the location of the datadir"""
+	module_dir = os.path.dirname( os.path.abspath(__file__) )
+	data_dir = module_dir + '/data'
+	data_dir += '/train' if mode=='train' else '/test'
+	data_dir += '/'
+	
+	return data_dir
+
+
+def get_file_list(mode='train', ftype='csv', fullpath=False):
+	"""Returns the list of files"""
+	datadir = get_datadir(mode=mode)
+	flist = os.listdir(datadir)
+	csvregex = re.compile('.*_data\.' + ftype)
+	matchlist = map(csvregex.search, flist)
+
+	if fullpath:
+		csvlist = [datadir + x.group() for x in matchlist if x is not None]
+	else:
+		csvlist = [x.group() for x in matchlist if x is not None]
+
+	return csvlist
+    
+
+
 
 def load_raw_train_data(subject_id=1,series_id=1):
 	"""
@@ -19,7 +50,7 @@ def load_raw_train_data(subject_id=1,series_id=1):
 			data: n * m numpy array of time ordered data
 			events: n * k labels for each data point 
 	"""
-	file_name = './data/train/subj'+str(subject_id)+'_series'+str(series_id)
+	file_name = 'data/train/subj'+str(subject_id)+'_series'+str(series_id)
 	data = pd.read_csv(file_name+'_data.csv')
 	events = pd.read_csv(file_name+'_events.csv')
 	return data.values[:,1:].astype(float), events.values[:,1:].tolist()

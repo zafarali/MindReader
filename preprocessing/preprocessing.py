@@ -1,12 +1,23 @@
+import sys
+sys.path.append('..')
+
+import preprocess_utils as utils
+import IOutils as io
+
+import os
+import re
 import numpy as np
+import pandas as pd
 import random
 from scipy import signal
-import preprocess_utils as utils
+from time import time
 
-def preprocess_sample(X_raw, normalize=True, filters=utils.FREQUENCY_BANDS.keys(), window_size=300, downsample=1):
 
-	if normalize:
-		X_raw = utils.normalize(X_raw)
+#---------------------------
+def preprocess_sample(X_raw, normalize=True, filters=utils.FREQUENCY_BANDS.keys(), window_size=300, downsample=1, shuffle=True):
+
+    if normalize:
+        X_raw = utils.normalize(X_raw)
 
 	if len(X_raw.shape) > 1:
 		wg = utils.window_generator_ND(X_raw, window_size=window_size, downsample=downsample)
@@ -29,6 +40,33 @@ def preprocess_sample(X_raw, normalize=True, filters=utils.FREQUENCY_BANDS.keys(
 	return np.array(features_extracted)
 
 
+
+#-----------------------
+def principal_frequencies(data):
+    pass
+
+
+
+#-----------------------
+def preprocess_all(mode='train'):
+    """Computes and saves the spectrographs of all input data"""
+    csvlist = io.get_file_list(mode=mode, fullpath=True)
+
+    for fname in csvlist:
+        data = pd.read_csv(fname).values[:,1:]
+
+        # Get the spectrograph
+        f,t,sxx = utils.spectrogram(data, window='boxcar', nperseg=256)
+        tmp = f
+        new_fname = fname[:-4] + '_spectro'
+        np.save(new_fname, sxx)
+
+    datadir = io.get_datadir(mode=mode)
+    np.save(datadir + 'spectro_freq', f)
+    np.save(datadir + 'spectro_time', t)
+
+
+
 def smoothening(X_raw, normalize=True, window_size=300, downsample=1):
 
 	if normalize:
@@ -47,3 +85,14 @@ def smoothening(X_raw, normalize=True, window_size=300, downsample=1):
 			smoothened.appened( np.mean(windowed_data) )
 
 	return np.array(smoothened)
+
+
+####################
+if __name__ == '__main__':
+    t0 = time()
+
+    preprocess_all()
+    
+    time_msg = "Time elapsed: " + "%.3f"%(time()-t0) + " seconds"
+    print(time_msg)
+
