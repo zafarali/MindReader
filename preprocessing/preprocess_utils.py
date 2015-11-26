@@ -13,17 +13,17 @@ FILTER_ORDER = 4
 DTYPE = np.float32
 
 FREQUENCY_BANDS = {
-    'delta':(1,4),
-    'theta':(4,8),
-    'alpha1':(8,10),
-    'alpha2':(10,12),
-    'alpha':(8,13),
-    'cbeta':(14,18),
-    'beta2':(18,26),
-    'beta':(13,30),
-    'pgamma':(36,40),
-    'gamma':(30,45),
-    'SMR':(12.5,15)
+	# 'delta':(1,4),
+	# 'theta':(4,8),
+	'alpha1':(8,10),
+	# 'alpha2':(10,12),
+	'alpha':(8,13),
+	# 'cbeta':(14,18),
+	# 'beta2':(18,26),
+	'beta':(13,30),
+	# 'pgamma':(36,40),
+	'gamma':(30,45),
+	'SMR':(12.5,15)
 }
 
 

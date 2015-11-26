@@ -53,7 +53,7 @@ def load_raw_train_data(subject_id=1,series_id=1):
 	file_name = 'data/train/subj'+str(subject_id)+'_series'+str(series_id)
 	data = pd.read_csv(file_name+'_data.csv')
 	events = pd.read_csv(file_name+'_events.csv')
-	return data.values[:,1:], events.values[:,1:]
+	return data.values[:,1:].astype(float), events.values[:,1:].tolist()
 	
 	
 def load_raw_test_data(subject_id=1,series_id=9):
@@ -68,7 +68,7 @@ def load_raw_test_data(subject_id=1,series_id=9):
 	"""
 	file_name = './data/test/subj'+str(subject_id)+'_series'+str(series_id)
 	data = pd.read_csv(file_name+'_data.csv')
-	return data.values[:,1:]
+	return data.values[:,1:].astype(float)
 
 
 def data_streamer(mode='train', num_sets='all', num_patients=12, num_series=8):
