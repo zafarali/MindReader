@@ -137,7 +137,7 @@ def window_generator_ND(X, window_size=300, downsample=1):
 
 
 #------------------------
-def load_data(subid, serid, mode='train', dir_name=None):
+def load_csv_data(subid, serid, mode='train', dir_name=None):
     """Loads the data from the appropriate folder, unless dir_name is specified"""
     if dir_name is None:
         file_name = io.get_datadir(mode=mode)

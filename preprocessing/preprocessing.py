@@ -39,7 +39,7 @@ def principal_frequencies(data):
 
 
 #-----------------------
-def preprocess_all(mode='train'):
+def make_all_spectrographs(mode='train'):
     """Computes and saves the spectrographs of all input data"""
     csvlist = io.get_file_list(mode=mode, fullpath=True)
 
