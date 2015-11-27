@@ -11,7 +11,7 @@ from sklearn.metrics import roc_auc_score as auc
 LRs = {}
 LRsprocessed = {}
 for label_name in IOutils.LABEL_NAMES:
-	# each label will have its own logistic regressor
+    # each label will have its own logistic regressor
     LRs[label_name] = LogisticRegression()
     LRsprocessed[label_name] = LogisticRegression()
 
