@@ -1,5 +1,6 @@
 import numpy as np
 import IOutils
+import random
 from sklearn.linear_model import LogisticRegression
 from preprocessing.preprocessing import preprocess_sample
 import sys
@@ -20,21 +21,40 @@ print('Initialized logistic regressors')
 
 # Load training data
 # load 1 trial each from 3 patients
-train_data = IOutils.data_streamer(mode='train', num_patients=1, num_series=7)
+train_data = IOutils.data_streamer(mode='train', num_patients=1, num_series=8)
 
+filters = ['alpha', 'beta']
 
 # obtain a validation set
 X_valid, Y_valid = train_data.next()
+
+# X_valid = X_valid[]
+
+selected_channels = range(X_valid.shape[1])
+# selected_channels = [3,4]
+
+X_valid = X_valid[:,selected_channels]
+# print Y_valid
+# X_valid = np.array(X_valid)
+Y_valid = np.array(Y_valid)
+X_valid_processed = preprocess_sample(X_valid, filters=filters)
+
+
 print('Validation set loaded')
 
 # train over remaining data sets one at a time
 for X,Y in train_data:
+    print('training round')
+    zipped = zip(X[:,selected_channels],Y)
+    random.shuffle(zipped)
+    X,Y = zip(*zipped)
+    X = np.array(X)
+    Y = np.array(Y)
+    X_processed = preprocess_sample(X, filters=filters)
     for i, label_name in enumerate(IOutils.LABEL_NAMES):
+        print('-->training label')
         LRs[label_name].fit(X, Y[:,i])
-        
-        X = preprocess_sample(X, filters=['alpha2'])
-
-        LRsprocessed[label_name].fit(X, Y[:,i])
+        LRsprocessed[label_name].fit(X_processed, Y[:,i])
 print('classifiers trained')
 
 
@@ -49,9 +69,8 @@ for i, label_name in enumerate(IOutils.LABEL_NAMES):
     print 'AUC (unprocessed,',label_name,'):',auc(Y_valid[:,i].astype(int), predicted.astype(int))
     # correct = predicted == Y_valid[:,i]
 
-    X_valid = preprocess_sample(X_valid, filters=['alpha2'])
 
-    predicted = LRsprocessed[label_name].predict(X_valid)
+    predicted = LRsprocessed[label_name].predict(X_valid_processed)
     print 'AUC (processed,',label_name,'):',auc(Y_valid[:,i].astype(int), predicted.astype(int))
     # correctprocessed = predicted == Y_valid[:,i]
     # print label_name,' unprocessed correct: ', np.sum(correct)/float(len(correct))

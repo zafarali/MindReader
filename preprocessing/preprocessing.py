@@ -69,9 +69,6 @@ def make_all_spectrographs(mode='train'):
 
 def smoothening(X_raw, normalize=True, window_size=300, downsample=1):
 
-	if normalize:
-		X_raw = utils.normalize(X_raw)
-
 	if len(X_raw.shape) > 1:
 		wg = utils.window_generator_ND(X_raw, window_size=window_size, downsample=downsample)
 	else:
@@ -79,6 +76,8 @@ def smoothening(X_raw, normalize=True, window_size=300, downsample=1):
 
 	smoothened = []
 	for windowed_data in wg:
+		if normalize:
+			windowed_data = utils.normalize(windowed_data)
 		if len(X_raw.shape) > 1:
 			smoothened.append( np.mean(windowed_data, axis=0).tolist() )
 		else:
