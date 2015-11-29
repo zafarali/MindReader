@@ -157,6 +157,32 @@ def magsq(x):
     return x.real**2 + x.imag**2
 
 
+
+#-----------------------
+def mov_avg(X, N, axis=0):
+    """Computes a moving average on the input array. Each point corresponds to
+    the mean of the up to N previous points (incl itsef) over the given axis"""
+    window = np.ones(N)*(1/float(N))
+
+    # Convolve with MA filter
+    ma_arr = np.apply_along_axis(np.convolve, axis, X, window, mode='full')
+
+    # Remove far edge 
+    ma_arr = np.delete(ma_arr, np.s_[-(N-1):], axis=axis)
+
+    # Correct the close edge
+    correction = float(N)/np.arange(1,N)
+    inplace_mult_start = lambda x,w: np.concatenate((x[:len(w)]*w, x[len(w):]))
+    ma_arr = np.apply_along_axis(inplace_mult_start, axis, ma_arr, correction)
+
+    return ma_arr
+
+#------------------------
+def running_normalization(X, N, axis=0):
+    """Removes the running average of up to the last N samples from the current sample"""
+    return X - mov_avg(X, N, axis=axis)
+
+
 #------------------------
 def spectrogram(X,
                 axis=0,
