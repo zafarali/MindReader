@@ -165,7 +165,7 @@ def mov_avg(X, N, axis=0):
     window = np.ones(N)*(1/float(N))
 
     # Convolve with MA filter
-    ma_arr = np.apply_along_axis(np.convolve, axis, X, window, mode='full')
+    ma_arr = np.apply_along_axis(signal.fftconvolve, axis, X, window, mode='full')
 
     # Remove far edge 
     ma_arr = np.delete(ma_arr, np.s_[-(N-1):], axis=axis)
@@ -176,6 +176,7 @@ def mov_avg(X, N, axis=0):
     ma_arr = np.apply_along_axis(inplace_mult_start, axis, ma_arr, correction)
 
     return ma_arr
+
 
 #------------------------
 def running_normalization(X, N, axis=0):
@@ -190,7 +191,7 @@ def spectrogram(X,
                 fs=SAMPLING_FREQUENCY,
                 **kwargs):
     """
-    Builds a spectrogram for each column in X
+    Builds a spectrogram for each column in X (by default)
     All the remaining kwargs are passed to scipy. Refer to scipy.signals.spectrogram()
     
     """

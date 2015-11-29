@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 sys.path.append('..')
 
@@ -42,28 +43,43 @@ def preprocess_sample(X_raw, normalize=True, filters=utils.FREQUENCY_BANDS.keys(
 
 
 #-----------------------
-def principal_frequencies(data):
+# INCOMPLETE
+def principal_frequencies(sxx, M):
+    """Outputs a vector of the M frequencies that can be directly concatenate"""
     pass
 
-
+#-----------------------
+def printflush(msg):
+    print(msg, end="")
+    sys.stdout.flush()
 
 #-----------------------
-def make_all_spectrographs(nperseg=256, mode='train'):
+# INCOMPLET
+def preprocess_all(normalization_window=50, nperseg=256, mode='train', disp=True):
     """Computes and saves the spectrographs of all input data"""
     csvlist = io.get_file_list(mode=mode, fullpath=True)
 
-    for fname in csvlist:
-        data = pd.read_csv(fname).values[:,1:]
+    pif = lambda msg: printflush(msg) if disp else None
 
+    for fullpath in csvlist:
+        t0 = time()
+        fpath, fname = os.path.split(fullpath)
+        data = pd.read_csv(fullpath).values[:,1:]
+        pif('Processing ' + fname + ' -- ' + str(data.shape[0]) + ' samples...')
+        
         # Get the spectrograph
-        f,t,sxx = utils.spectrogram(data, window='boxcar', nperseg=nperseg)
-        tmp = f
-        new_fname = fname[:-4] + '_spectro'
-        np.save(new_fname, sxx)
+        #f,t,sxx = utils.spectrogram(data, window='boxcar', nperseg=nperseg)
+        #new_fname = fullpath[:-4] + '_spectro'
+        #np.save(new_fname, sxx)
 
-    datadir = io.get_datadir(mode=mode)
-    np.save(datadir + 'spectro_freq', f)
-    np.save(datadir + 'spectro_time', t)
+        # Execute the running mean
+        
+        norm_data = utils.running_normalization(data, normalization_window, axis=0)
+        pif("\b" + "%.3f"%(time()-t0) + " s\n")
+
+
+
+
 
 
 
@@ -94,10 +110,10 @@ def smoothening(X_raw, normalize=True, window_size=300, downsample=1):
 if __name__ == '__main__':
     t0 = time()
 
-    #preprocess_all()
-    X = np.array([(x,10*x, 2*x, 3*x) for x in range(2,12)])
-    X = utils.running_normalization(X,5)
-    print(X)
+    preprocess_all()
+    #make_all_spectrographs()
+    #X = np.array([(x,10*x, 2*x, 3*x) for x in range(2,12)])
+    #X = utils.running_normalization(X,5)
     
     time_msg = "Time elapsed: " + "%.3f"%(time()-t0) + " seconds"
     print(time_msg)

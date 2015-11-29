@@ -21,11 +21,11 @@ def get_datadir(mode='train'):
     return data_dir
 
 
-def get_file_list(mode='train', ftype='csv', fullpath=False):
+def get_file_list(mode='train', fullpath=False, regex='.*data\.csv'):
     """Returns the list of files"""
     datadir = get_datadir(mode=mode)
     flist = os.listdir(datadir)
-    csvregex = re.compile('.*_data\.' + ftype)
+    csvregex = re.compile(regex)
     matchlist = map(csvregex.search, flist)
 
     if fullpath:
