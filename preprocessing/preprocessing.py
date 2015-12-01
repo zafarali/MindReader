@@ -43,7 +43,6 @@ def preprocess_sample(X_raw, normalize=True, filters=utils.FREQUENCY_BANDS.keys(
 
 
 #-----------------------
-# INCOMPLETE
 def principal_frequencies(sxx, N):
     """Outputs a vector of the N frequencies that can be directly concatenate"""
 
@@ -113,10 +112,9 @@ def preprocess_all(norm_wind=None,
         final_data = np.append(norm_data, repeated_max_freqs, axis=1)
         #del norm_data
 
-        norm_wind = 'FULL' if norm_wind==None else norm_wind
-        final_fname = fullpath[:-4] + '_W' + str(nperseg) + '_norm' + str(norm_wind)
+        str_wind = 'FULL' if wind==data.shape[0] else wind
+        final_fname = fullpath[:-4] + '_W' + str(nperseg) + '_norm' + str(str_wind)
         np.save(final_fname, final_data)
-        exit()
 
 
 

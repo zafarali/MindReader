@@ -39,7 +39,7 @@ def get_file_list(mode='train', fullpath=False, regex='.*data\.csv'):
     
 
 #------------------------------
-def data_streamer2(mode='train', regex='.*W256\.npy'):
+def data_streamer2(mode='train', regex='.*W256_normFULL\.npy'):
     """Streams files from the data folder matching the regex. The regex will match the
     """
     pathlist = get_file_list(mode=mode, fullpath=True, regex=regex)
