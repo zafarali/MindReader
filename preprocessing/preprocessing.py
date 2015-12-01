@@ -44,22 +44,40 @@ def preprocess_sample(X_raw, normalize=True, filters=utils.FREQUENCY_BANDS.keys(
 
 #-----------------------
 # INCOMPLETE
-def principal_frequencies(sxx, M):
-    """Outputs a vector of the M frequencies that can be directly concatenate"""
-    pass
+def principal_frequencies(sxx, N):
+    """Outputs a vector of the N frequencies that can be directly concatenate"""
+
+    # Extract max sensor for each frequency
+    max_over_sensor = np.max(sxx,axis=1)
+
+    # Extract the N strongest frequenciess
+    max_freqs = np.argpartition(max_over_sensor, N, axis=1)[:,sxx.shape[2]-N:]
+    max_freqs.sort(axis=1)
+
+    # Normalize
+    out = max_freqs / float(sxx.shape[2])
+    
+    return out
 
 #-----------------------
 def printflush(msg):
     print(msg, end="")
     sys.stdout.flush()
 
+
+
 #-----------------------
-# INCOMPLET
-def preprocess_all(normalization_window=50, nperseg=256, mode='train', disp=True):
+# INCOMPLETE
+def preprocess_all(normalization_window=100,
+                   nperseg=256,
+                   mode='train',
+                   max_freq_count=10,
+                   disp=False):
     """Computes and saves the spectrographs of all input data"""
     csvlist = io.get_file_list(mode=mode, fullpath=True)
 
     pif = lambda msg: printflush(msg) if disp else None
+
 
     for fullpath in csvlist:
         t0 = time()
@@ -68,14 +86,33 @@ def preprocess_all(normalization_window=50, nperseg=256, mode='train', disp=True
         pif('Processing ' + fname + ' -- ' + str(data.shape[0]) + ' samples...')
         
         # Get the spectrograph
-        #f,t,sxx = utils.spectrogram(data, window='boxcar', nperseg=nperseg)
-        #new_fname = fullpath[:-4] + '_spectro'
-        #np.save(new_fname, sxx)
+        f,t,sxx = utils.spectrogram(data, window='boxcar', nperseg=nperseg)
+        #spectro_fname = fullpath[:-4] + '_spectro'
+        #np.save(spectro_fname, sxx)
+
+        # N Principal frequencies (a normalized index)
+        max_freqs = principal_frequencies(sxx, max_freq_count)
+
+        # BLow up the max frequencies to match the data array
+        repeated_max_freqs = np.empty((data.shape[0], max_freq_count), dtype=max_freqs.dtype)
+        tmp = np.zeros((1, max_freqs.shape[1]))
+        max_freqs = np.insert(max_freqs, 0, tmp, axis=0)
+        for k in range(0,max_freqs.shape[0]-1):
+            repeated_max_freqs[k*nperseg:(k+1)*nperseg,:] = np.tile(max_freqs[k,:], (nperseg,1))
+
 
         # Execute the running mean
-        
         norm_data = utils.running_normalization(data, normalization_window, axis=0)
         pif("\b" + "%.3f"%(time()-t0) + " s\n")
+
+        # Concatenate
+        #del data
+        final_data = np.append(norm_data, repeated_max_freqs, axis=1)
+        #del norm_data
+
+        final_fname = fullpath[:-4] + '_preprocessed_W' + str(nperseg)
+        np.save(final_fname, final_data)
+        exit()
 
 
 
@@ -114,6 +151,7 @@ if __name__ == '__main__':
     #make_all_spectrographs()
     #X = np.array([(x,10*x, 2*x, 3*x) for x in range(2,12)])
     #X = utils.running_normalization(X,5)
+
     
     time_msg = "Time elapsed: " + "%.3f"%(time()-t0) + " seconds"
     print(time_msg)

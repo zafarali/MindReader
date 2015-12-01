@@ -153,9 +153,9 @@ def load_csv_data(subid, serid, mode='train', dir_name=None):
 
 #------------------------
 def magsq(x):
-    """Outputs the magnitude squared of ndarray x"""
-    return x.real**2 + x.imag**2
-
+    """Calculates the maginitude squared of an input vector x"""
+    tmp = x.real**2 + x.imag**2
+    return tmp
 
 
 #-----------------------
@@ -181,7 +181,12 @@ def mov_avg(X, N, axis=0):
 #------------------------
 def running_normalization(X, N, axis=0):
     """Removes the running average of up to the last N samples from the current sample"""
-    return X - mov_avg(X, N, axis=axis)
+    if X.shape[0] == N:
+        csum = X.cumsum(axis=0)
+        csum /= np.mgrid[0:x.shape[0],0:x.shape[1]][0]
+        return X - csum
+    else:
+        return X - mov_avg(X, N, axis=axis)
 
 
 #------------------------
@@ -204,8 +209,8 @@ def spectrogram(X,
     kwargs = dict(kwargs, **tmpdict)
 
     f, t, sxx = signal.spectrogram(X, **kwargs)
-    psd = magsq(sxx)
-    return f, t, psd
+    sxx = np.swapaxes(sxx.astype(np.complex64), 0, 2)
+    return f, t, magsq(sxx)
 
 
 
