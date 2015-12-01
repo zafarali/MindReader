@@ -183,7 +183,7 @@ def running_normalization(X, N, axis=0):
     """Removes the running average of up to the last N samples from the current sample"""
     if X.shape[0] == N:
         csum = X.cumsum(axis=0)
-        csum /= np.mgrid[0:x.shape[0],0:x.shape[1]][0]
+        csum = csum.astype(DTYPE)/(np.mgrid[1:X.shape[0]+1,0:X.shape[1]][0])
         return X - csum
     else:
         return X - mov_avg(X, N, axis=axis)

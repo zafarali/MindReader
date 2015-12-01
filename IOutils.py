@@ -11,6 +11,7 @@ LABEL_NAMES = ['HandStart','FirstDigitTouch','BothStartLoadPhase','LiftOff','Rep
 
 
 
+#------------------------------
 def get_datadir(mode='train'):
     """returns the location of the datadir"""
     module_dir = os.path.dirname( os.path.abspath(__file__) )
@@ -21,6 +22,7 @@ def get_datadir(mode='train'):
     return data_dir
 
 
+#------------------------------
 def get_file_list(mode='train', fullpath=False, regex='.*data\.csv'):
     """Returns the list of files"""
     datadir = get_datadir(mode=mode)
@@ -36,8 +38,36 @@ def get_file_list(mode='train', fullpath=False, regex='.*data\.csv'):
     return csvlist
     
 
+#------------------------------
+def data_streamer2(mode='train', regex='.*W256\.npy'):
+    """Streams files from the data folder matching the regex. The regex will match the
+    """
+    pathlist = get_file_list(mode=mode, fullpath=True, regex=regex)
+    flist = [os.path.split(x)[1] for x in pathlist]
+
+    # Make a list of numbers corresponding to the subject_id and series_id
+    matchlist = [re.finditer('\d+', fname) for fname in flist]
+    idlist = [int(m.next().group(0))*100+int(m.next().group(0)) for m in matchlist]
+
+    # Sort the data path list
+    datadir = get_datadir(mode=mode)
+    sorted_pathlist = sort_with_other(pathlist, idlist)
+    idlist.sort()
+    sorted_eventpathlist = [datadir + 'subj' + str(i/100) + '_series'\
+                            + str(i%100) + '_events.csv' for i in idlist]
+
+    #Iterator loop
+    for path, event in zip(sorted_pathlist, sorted_eventpathlist):
+        data = np.load(path)
+        event_data = pd.read_csv(event).values[:,1:].tolist() if mode=='train' else None
+        yield data, event_data
 
 
+#------------------------------
+def sort_with_other(tosort,indexes):
+    return [x for (x,y) in sorted(zip(tosort,indexes), key=lambda tmp: tmp[1])]
+
+#------------------------------
 def load_raw_train_data(subject_id=1,series_id=1):
     """
         Loads a set of data from the training folder
@@ -56,6 +86,10 @@ def load_raw_train_data(subject_id=1,series_id=1):
     return data.values[:,1:].astype(float), events.values[:,1:].tolist()
     
     
+
+
+
+#------------------------------
 def load_raw_test_data(subject_id=1,series_id=9):
     """
         Loads a set of data from the testing folder
@@ -71,6 +105,7 @@ def load_raw_test_data(subject_id=1,series_id=9):
     return data.values[:,1:].astype(float)
 
 
+#------------------------------
 def data_streamer(mode='train', num_sets='all', num_patients=12, num_series=8):
     """
         Generator that streams data according to how it is best necessary
@@ -108,6 +143,7 @@ def data_streamer(mode='train', num_sets='all', num_patients=12, num_series=8):
 
 
 if __name__ == '__main__':
+    
     print """
         To use IOUtils:
         (1) Download data from https://www.kaggle.com/c/grasp-and-lift-eeg-detection/data

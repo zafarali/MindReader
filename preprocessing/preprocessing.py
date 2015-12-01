@@ -67,12 +67,11 @@ def printflush(msg):
 
 
 #-----------------------
-# INCOMPLETE
-def preprocess_all(normalization_window=100,
+def preprocess_all(norm_wind=None,
                    nperseg=256,
                    mode='train',
                    max_freq_count=10,
-                   disp=False):
+                   disp=True):
     """Computes and saves the spectrographs of all input data"""
     csvlist = io.get_file_list(mode=mode, fullpath=True)
 
@@ -102,7 +101,11 @@ def preprocess_all(normalization_window=100,
 
 
         # Execute the running mean
-        norm_data = utils.running_normalization(data, normalization_window, axis=0)
+        if norm_wind is not None:
+            wind = norm_wind
+        else:
+            wind = data.shape[0]
+        norm_data = utils.running_normalization(data, wind, axis=0)
         pif("\b" + "%.3f"%(time()-t0) + " s\n")
 
         # Concatenate
@@ -110,7 +113,8 @@ def preprocess_all(normalization_window=100,
         final_data = np.append(norm_data, repeated_max_freqs, axis=1)
         #del norm_data
 
-        final_fname = fullpath[:-4] + '_preprocessed_W' + str(nperseg)
+        norm_wind = 'FULL' if norm_wind==None else norm_wind
+        final_fname = fullpath[:-4] + '_W' + str(nperseg) + '_norm' + str(norm_wind)
         np.save(final_fname, final_data)
         exit()
 
@@ -147,10 +151,10 @@ def smoothening(X_raw, normalize=True, window_size=300, downsample=1):
 if __name__ == '__main__':
     t0 = time()
 
-    preprocess_all()
+    preprocess_all(mode='test')
+    preprocess_all(mode='train')
     #make_all_spectrographs()
-    #X = np.array([(x,10*x, 2*x, 3*x) for x in range(2,12)])
-    #X = utils.running_normalization(X,5)
+
 
     
     time_msg = "Time elapsed: " + "%.3f"%(time()-t0) + " seconds"
