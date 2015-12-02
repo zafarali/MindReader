@@ -59,7 +59,7 @@ def data_streamer2(mode='train', regex='.*W256_normFULL\.npy'):
     #Iterator loop
     for path, event in zip(sorted_pathlist, sorted_eventpathlist):
         data = np.load(path)
-        event_data = pd.read_csv(event).values[:,1:].tolist() if mode=='train' else None
+        event_data = pd.read_csv(event).values[:,1:].astype(np.int32) if mode=='train' else None
         yield data, event_data
 
 
@@ -83,7 +83,7 @@ def load_raw_train_data(subject_id=1,series_id=1):
     file_name = 'data/train/subj'+str(subject_id)+'_series'+str(series_id)
     data = pd.read_csv(file_name+'_data.csv')
     events = pd.read_csv(file_name+'_events.csv')
-    return data.values[:,1:].astype(float), events.values[:,1:].tolist()
+    return data.values[:,1:].astype(float), events.values[:,1:].astype(np.int32)
     
     
 
@@ -139,6 +139,33 @@ def data_streamer(mode='train', num_sets='all', num_patients=12, num_series=8):
                 if num_sets != 'all' and num_sets < loaded: break
             if num_sets != 'all' and num_sets < loaded: break
             
+##### TRANSFORMER
+
+
+
+def _unique_rows(data):
+    uniq = np.unique(data.view(data.dtype.descr * data.shape[1]))
+    return uniq.view(data.dtype).reshape(-1, data.shape[1])
+
+
+class VectorTransformer(object):
+    def __init__(self, Y):
+        """
+            Train a transformer using an initial Y 
+            that contains all possible vectors.
+        """
+        self.unique_rows = np.array(_unique_rows(Y))
+
+    def transform_vector(self, y):
+        for i, u in enumerate(self.unique_rows):
+            if (y == u).all():
+                return i
+        
+        return -1
+
+    def transform(self, Y):
+        return np.apply_along_axis(self.transform_vector, axis=1, arr=np.array(Y, dtype=np.int32)).astype(np.int32)  
+    
 
 
 
