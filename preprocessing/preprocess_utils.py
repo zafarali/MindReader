@@ -153,8 +153,40 @@ def load_csv_data(subid, serid, mode='train', dir_name=None):
 
 #------------------------
 def magsq(x):
-    """Outputs the magnitude squared of ndarray x"""
-    return x.real**2 + x.imag**2
+    """Calculates the maginitude squared of an input vector x"""
+    tmp = x.real**2 + x.imag**2
+    return tmp
+
+
+#-----------------------
+def mov_avg(X, N, axis=0):
+    """Computes a moving average on the input array. Each point corresponds to
+    the mean of the up to N previous points (incl itsef) over the given axis"""
+    window = np.ones(N)*(1/float(N))
+
+    # Convolve with MA filter
+    ma_arr = np.apply_along_axis(signal.fftconvolve, axis, X, window, mode='full')
+
+    # Remove far edge 
+    ma_arr = np.delete(ma_arr, np.s_[-(N-1):], axis=axis)
+
+    # Correct the close edge
+    correction = float(N)/np.arange(1,N)
+    inplace_mult_start = lambda x,w: np.concatenate((x[:len(w)]*w, x[len(w):]))
+    ma_arr = np.apply_along_axis(inplace_mult_start, axis, ma_arr, correction)
+
+    return ma_arr
+
+
+#------------------------
+def running_normalization(X, N, axis=0):
+    """Removes the running average of up to the last N samples from the current sample"""
+    if X.shape[0] == N:
+        csum = X.cumsum(axis=0)
+        csum = csum.astype(DTYPE)/(np.mgrid[1:X.shape[0]+1,0:X.shape[1]][0])
+        return X - csum
+    else:
+        return X - mov_avg(X, N, axis=axis)
 
 
 #------------------------
@@ -164,7 +196,7 @@ def spectrogram(X,
                 fs=SAMPLING_FREQUENCY,
                 **kwargs):
     """
-    Builds a spectrogram for each column in X
+    Builds a spectrogram for each column in X (by default)
     All the remaining kwargs are passed to scipy. Refer to scipy.signals.spectrogram()
     
     """
@@ -177,8 +209,8 @@ def spectrogram(X,
     kwargs = dict(kwargs, **tmpdict)
 
     f, t, sxx = signal.spectrogram(X, **kwargs)
-    psd = magsq(sxx)
-    return f, t, psd
+    sxx = np.swapaxes(sxx.astype(np.complex64), 0, 2)
+    return f, t, magsq(sxx)
 
 
 
