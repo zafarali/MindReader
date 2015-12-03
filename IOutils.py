@@ -1,5 +1,6 @@
 # Contains Input-Output Utilities
 # for handling data
+from collections import Counter
 import numpy as np
 import pandas as pd
 import os
@@ -143,29 +144,69 @@ def data_streamer(mode='train', num_sets='all', num_patients=12, num_series=8):
 
 
 
-def _unique_rows(data):
-    uniq = np.unique(data.view(data.dtype.descr * data.shape[1]))
-    return uniq.view(data.dtype).reshape(-1, data.shape[1])
+# def _unique_rows(data):
+#     uniq = np.unique(data.view(data.dtype.descr * data.shape[1]))
+#     return uniq.view(data.dtype).reshape(-1, data.shape[1])
 
 
 class VectorTransformer(object):
-    def __init__(self, Y):
+    def __init__(self, Y=None, prefit=True):
         """
             Train a transformer using an initial Y 
             that contains all possible vectors.
         """
-        self.unique_rows = np.array(_unique_rows(Y))
+        # if Y != None:
+        #     raise FutureWarning('The usage of VectorTransformer has changed, please use as: \
+        #         vt = VectorTransformer()\n\
+        #         vt.fit(Y) \n\
+        #         vt.transform(Y)')
+        self.unique_rows = [(0, 0, 0, 0, 0, 0),
+                            (0, 1, 1, 0, 0, 0),
+                            (0, 1, 1, 1, 0, 0),
+                            (1, 0, 0, 0, 0, 0),
+                            (0, 0, 1, 0, 0, 0),
+                            (0, 1, 0, 0, 0, 0),
+                            (0, 0, 0, 0, 1, 1),
+                            (0, 0, 1, 1, 0, 0),
+                            (0, 0, 0, 1, 0, 0),
+                            (0, 1, 0, 1, 0, 0),
+                            (0, 0, 0, 0, 0, 1),
+                            (0, 0, 0, 0, 1, 0)]
+        self.silent = True
+        self.prefit = prefit
+
+    def fit(self, Y):
+        """
+            Refits the model "VectorTransformer" according
+            to a new sample of Y
+        """
+        if prefit:
+            return
+        if type(Y) == np.ndarray:
+            Y = map(lambda x: tuple(x), Y.tolist())
+
+        self.unique_rows = Counter(Y).keys()
+        self.silent = False
+
 
     def transform_vector(self, y):
+        """
+            Transforms a single vector y
+        """
+        y = tuple(y)
         for i, u in enumerate(self.unique_rows):
-            if (y == u).all():
+            if hash(y) == hash(u):
                 return i
-        
+        if not self.silent:
+            print y,' did not have a mapping'
         return -1
 
     def transform(self, Y):
-        return np.apply_along_axis(self.transform_vector, axis=1, arr=np.array(Y, dtype=np.int32)).astype(np.int32)  
-    
+        """
+            Transforms an array of vectors according to the
+            fitted model
+        """
+        return np.apply_along_axis(self.transform_vector, axis=1, arr=Y).astype(np.int32)
 
 
 
