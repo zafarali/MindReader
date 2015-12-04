@@ -97,6 +97,11 @@ def preprocess_all(norm_wind=None,
         max_freqs = np.insert(max_freqs, 0, tmp, axis=0)
         for k in range(0,max_freqs.shape[0]-1):
             repeated_max_freqs[k*nperseg:(k+1)*nperseg,:] = np.tile(max_freqs[k,:], (nperseg,1))
+        final_index = k
+
+        # clean off array
+        for k in range(
+
 
 
         # Execute the running mean

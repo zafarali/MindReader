@@ -40,11 +40,18 @@ def get_file_list(mode='train', fullpath=False, regex='.*data\.csv'):
     
 
 #------------------------------
-def data_streamer2(mode='train', regex='.*W256_normFULL\.npy'):
-    """Streams files from the data folder matching the regex. The regex will match the
+def data_streamer2(mode='train', regex='.*W256_normFULL\.npy', keeplist=[], invertkeep=False):
+    """Streams files from the data folder matching the regex.
+    @params:
+    keeplist: list of tuples of (subject, series) to keep. If empty, keep all.
+              if (subject, 0), it will keep all the series for that subject
+    invertkeep: If true, keeplist will behave as a list of (subject, series) to omit
     """
     pathlist = get_file_list(mode=mode, fullpath=True, regex=regex)
     flist = [os.path.split(x)[1] for x in pathlist]
+
+    max_sub = 12
+    max_series = 8 if mode=='train' else 2
 
     # Make a list of numbers corresponding to the subject_id and series_id
     matchlist = [re.finditer('\d+', fname) for fname in flist]
@@ -57,10 +64,37 @@ def data_streamer2(mode='train', regex='.*W256_normFULL\.npy'):
     sorted_eventpathlist = [datadir + 'subj' + str(i/100) + '_series'\
                             + str(i%100) + '_events.csv' for i in idlist]
 
+    # Expand keeplist
+    exkeeplist = []
+    for sub, series in keeplist:
+        if series==0:
+            exkeeplist += [max_series*(sub-1) + x - 1 for x in range(max_series)]
+        else:
+            exkeeplist.append(max_series*(sub-1) + series - 1)
+
+    # Build omitlist
+    if not invertkeep:
+        omitlist = [x for x in range(len(sorted_pathlist)) if x not in exkeeplist]
+    else:
+        omitlist = exkeeplist
+
+    
+    # Located all omitted sub, series
+    for curr_omit in omitlist:
+        sorted_pathlist[curr_omit] = 0
+        sorted_eventpathlist[curr_omit] = 0
+
+    # Drop omitted sub, series
+    sorted_pathlist = [x for x in sorted_pathlist if x is not 0]
+    sorted_eventpathlist = [x for x in sorted_eventpathlist if x is not 0]
+    
+    
     #Iterator loop
     for path, event in zip(sorted_pathlist, sorted_eventpathlist):
         data = np.load(path)
+        #data = path
         event_data = pd.read_csv(event).values[:,1:].astype(np.int32) if mode=='train' else None
+        #event_data = event if mode=='train' else None
         yield data, event_data
 
 
@@ -211,6 +245,10 @@ class VectorTransformer(object):
 
 
 if __name__ == '__main__':
+    olist = [(2,0),(1,3),(5,6)]
+    tmp = data_streamer2(keeplist=olist)
+    for dat, ev in tmp:
+        print(dat.shape)
     
     print """
         To use IOUtils:
