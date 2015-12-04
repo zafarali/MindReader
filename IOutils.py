@@ -72,6 +72,10 @@ def data_streamer2(mode='train', regex='.*W256_normFULL\.npy', keeplist=[], inve
         else:
             exkeeplist.append(max_series*(sub-1) + series - 1)
 
+    # SO that the default loads everything
+    if exkeeplist==[]:
+        invertkeep = True
+
     # Build omitlist
     if not invertkeep:
         omitlist = [x for x in range(len(sorted_pathlist)) if x not in exkeeplist]
