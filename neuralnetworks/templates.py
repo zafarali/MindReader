@@ -33,6 +33,33 @@ def BasicNN(max_epochs=10, hidden_num_units=20, update_learning_rate=0.01, input
 
 	return net
 
+def BasicNN2(max_epochs=10, hidden = [20], update_learning_rate=0.01, input_shape=(None, 32), output_num_units=18):
+	
+	NN_layers = [ ('input', layers.InputLayer) ]
+	hidden_args = {}
+	for i, num_units in enumerate(hidden):
+		NN_layers.append( ('hidden'+str(i) , layers.DenseLayer) )
+		hidden_args['hidden'+str(i)+'_num_units'] = num_units
+
+	NN_layers.append( ('output', layers.DenseLayer) )
+
+
+	net = NeuralNet(
+	    layers=NN_layers,
+	    input_shape=input_shape,
+
+	    output_nonlinearity=lasagne.nonlinearities.softmax,
+	    output_num_units=output_num_units,
+
+	    #optimization parameters
+	    update=nesterov_momentum,
+	    update_learning_rate=update_learning_rate,
+	    max_epochs=max_epochs,
+	    verbose=10000,
+	    **hidden_args
+	)
+
+	return net
 
 # def DoubleCNN(learning_rate=0.01, max_epochs=100, update_learning_rate=0.01, input_shape=(None, 1, PIXELS, PIXELS)):
 # 	net = NeuralNet(
