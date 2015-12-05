@@ -12,19 +12,31 @@ from neuralnetworks.templates import BasicNN
 from sklearn.metrics import confusion_matrix, classification_report
 
 
+import sys
+
+if not len(sys.argv)>1:
+    print """arguments:
+        SUBJECT_ID: Id of the subject you want to train
+        N_REPEAT_SAMPLING: number of times to repeat zero sampling
+        NUM_ZERO_METRIC: metric to pick zeros (mean, max, min)
+        HIDDEN_NODES: number of hidden units
+        MAX_EPOCHS: maximum number of epochs
+    """
+    raise Exception('NEED MORE ARGUMENTS')
 # In[2]:
 
+NUM_ZERO_METRIC = sys.argv[3]
 # obtain the first 7 datas for the 2nd subject
-subject_id = 2
+subject_id = int(sys.argv[1])
 training_ds = IOutils.data_streamer2(keeplist=[ (subject_id, i) for i in range(1,7) ]) 
-nn = BasicNN(input_shape=(None,42), output_num_units=12, max_epochs=50, hidden_num_units=60)
+nn = BasicNN(input_shape=(None,42), output_num_units=12, max_epochs=int(sys.argv[5]), hidden_num_units=int(sys.argv[4]))
 vt = IOutils.VectorTransformer()
 
 
 # In[3]:
 
 # number of times to repeat 0 subsampling
-n_repeat_sampling = 5
+n_repeat_sampling = int(sys.argv[2])
 dataset_count = 0
 for X,Y in training_ds:
     dataset_count += 1
@@ -47,7 +59,14 @@ for X,Y in training_ds:
 #     print('number of nonzeros', len(Y_nonzero))
     
     # obtain the number of zeros to sample
-    to_sample = int(np.mean(Counter(Y.tolist()).values()))
+    vals = Counter(Y.tolist()).values()
+    if NUM_ZERO_METRIC == 'mean':
+        pick_zeros = np.mean(vals)
+    elif NUM_ZERO_METRIC == 'max':
+        pick_zeros = np.max(vals)
+    elif NUM_ZERO_METRIC == 'min':
+        pick_zeros = np.min(vals)
+    to_sample = int(pick_zeros)
 #     print('number of zeros to sample:',to_sample)
     
     for i in range(n_repeat_sampling):
