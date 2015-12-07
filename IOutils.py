@@ -145,7 +145,7 @@ def load_raw_test_data(subject_id=1,series_id=9):
 
 
 #------------------------------
-def data_streamer(mode='train', num_sets='all', num_patients=12, num_series=8):
+def data_streamer(mode='train', num_sets='all', patients_list=None, series_list=None, num_patients=12, num_series=8):
     """
         Generator that streams data according to how it is best necessary
         Use as follows:
@@ -156,12 +156,22 @@ def data_streamer(mode='train', num_sets='all', num_patients=12, num_series=8):
             # do something with data
             etc etc.
     """
-    participants = xrange(1,num_patients+1) # 12 subjects
-    train_series = xrange(1,num_series+1) # 8 series in train
+
+    if patients_list:
+        participants = patients_list
+    else:
+        participants = xrange(1,num_patients+1) # 12 subjects
+    if series_list:
+        train_series = series_list
+        test_series = series_list
+    else:
+        test_series = xrange(9,9+num_series) # 2 series in test
+        train_series = xrange(1,num_series+1) # 8 series in train
+
     if mode == 'test' and num_series > 2:
         num_series = 2
-    test_series = xrange(9,9+num_series) # 2 series in test
     loaded = 0
+    
     if mode == 'train':
         for participant in participants:
             for series in train_series:
