@@ -1,60 +1,58 @@
+import sys
+sys.path.append('..')
+import IOutils as io
+
 import numpy as np
 import os
 import pandas as pd
 
-csvdir = '../proj4/data/train'
-n_subs = 12
-n_series = 8
-n_channels = 32
 
+
+
+
+# Grab train data
 data = []
 label = []
+n_sub = 1
+n_series = 8
 
-"""
-for sub in np.arange(n_subs):
+train_streamer = io.data_streamer2(mode='train')
+
+for k in range(n_sub):
     sub_data = []
     sub_label = []
-    for series in np.arange(n_series):
-        csv = 'subj' + str(sub + 1) + '_series' + str(series + 1) + '_data.csv'
-        series_data = pd.read_csv(os.path.join(csvdir, csv))
-        ch_names = list(series_data.columns[1:])
-        series_data = np.array(series_data[ch_names], 'float32')
-        sub_data.append(series_data)
-
-        csv = 'subj' + str(sub + 1) + '_series' + str(series + 1) + '_events.csv'
-        series_label = pd.read_csv(os.path.join(csvdir, csv))
-        ch_names = list(series_label.columns[1:])
-        series_label = np.array(series_label[ch_names], 'float32')
-        sub_label.append(series_label)
+    for series in range(n_series):
+        d, e = train_streamer.next()
+        sub_data.append(d)
+        sub_label.append(e)
 
     data.append(sub_data)
     label.append(sub_label)
 
 np.save('eeg_train.npy', [data, label])
-"""
 
-csvdir = '../proj4/data/test'
-n_subs = 12
-n_series = 2
-n_channels = 32
+del data, label
 
+# Grab test data
 data = []
 label = []
+n_sub = 1
+n_series = 2
 
-for sub in np.arange(n_subs):
+test_streamer = io.data_streamer2(mode='test')
+
+
+for k in range(n_sub):
     sub_data = []
     sub_label = []
-    for series in np.arange(9, 9 + n_series):
-        csv = 'subj' + str(sub+1) + '_series' + str(series) + '_data.csv'
-        series_data = pd.read_csv(os.path.join(csvdir, csv))
-        ch_names = list(series_data.columns[1:])
-        series_data = np.array(series_data[ch_names], 'float32')
-        sub_data.append(series_data)
-
-        series_label = np.zeros([series_data.shape[0], 6])
-        sub_label.append(series_label)
+    for series in range(n_series):
+        d, _ = test_streamer.next()
+        e = np.zeros([d.shape[0], 6])
+        sub_data.append(d)
+        sub_label.append(e)
 
     data.append(sub_data)
     label.append(sub_label)
+
 
 np.save('eeg_test.npy', [data, label])
