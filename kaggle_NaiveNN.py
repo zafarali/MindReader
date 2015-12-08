@@ -60,7 +60,7 @@ class Source:
     @staticmethod
     def path(subject, series, kind):
         prefix = "train" if (series in TRAIN_SERIES) else "test"
-        return "../input/{0}/subj{1}_series{2}_{3}.csv".format(prefix, subject, series, kind)
+        return "./data/{0}/subj{1}_series{2}_{3}.csv".format(prefix, subject, series, kind)
     
     csv_cache = {}
     @classmethod
