@@ -54,8 +54,8 @@ class Source:
         self.events = np.concatenate(raw_events, axis=0).astype(np.int32)
     
     def normalize(self):
-        self.data -= self.mean
-        self.data /= self.std
+        self.data = self.data - self.mean
+        self.data =  self.data / self.std
         
     @staticmethod
     def path(subject, series, kind):
