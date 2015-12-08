@@ -80,7 +80,13 @@ for X,Y in training_ds:
 #    if any_nans or any_infs:
 #        print('NANS WERE FOUND')
 #        break
-#         print X_train.shape
+
+    X_train = np.array(list(wg))
+    print X_train.shape
+    any_nans = np.isnan(X_train).any()
+    any_infs = np.isinf(X_train).any()
+
+#      print X_train.shape
     # fit the classifier
     nn.fit(X_train, Y_train)
     #end windower
@@ -115,21 +121,15 @@ wg = window_generator_ND(X_test, window_size=WINDOW_SIZE)
 # print multiple_auc(Y_test, predicted)
 
 
-# In[ ]:
-
-testing_data = wg
+# In[ ]:testing_data = wg
 
 predicted = nn.predict(testing_data)
 print confusion_matrix(Y_test, predicted)
 print classification_report(Y_test,predicted)
-print multiple_auc(Y_test, predicted)
-
 
 # In[ ]:
 
-#testing_data.shap##e
-
-import cPickle as pickle
+testing_data.shape
 
 pickle.dump(nn, open('./CNN_perpatient.pickle', 'w'))
 print('Pickle saved')

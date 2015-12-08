@@ -58,20 +58,21 @@ def principal_frequencies(sxx, N):
     
     return out
 
+
 #-----------------------
 def printflush(msg):
     print(msg, end="")
     sys.stdout.flush()
 
 
-
 #-----------------------
-def preprocess_all(norm_wind=None,
-                   nperseg=256,
-                   mode='train',
-                   max_freq_count=10,
-                   disp=True):
-    """Computes and saves the spectrographs of all input data"""
+def preprocess_all_mk0(norm_wind=None,
+                       nperseg=256,
+                       mode='train',
+                       max_freq_count=10,
+                       disp=True):
+    """Preprocesses all the data.
+    Append the 10 highest frequency components of each previous nperseg window"""
     csvlist = io.get_file_list(mode=mode, fullpath=True)
 
     pif = lambda msg: printflush(msg) if disp else None
@@ -107,7 +108,7 @@ def preprocess_all(norm_wind=None,
             wind = norm_wind
         else:
             wind = data.shape[0]
-        norm_data = utils.running_normalization(data, wind, axis=0)
+        norm_data = utils.running_zeromean(data, wind, axis=0)
         pif("\b" + "%.3f"%(time()-t0) + " s\n")
 
         # Concatenate
@@ -116,9 +117,41 @@ def preprocess_all(norm_wind=None,
         #del norm_data
 
         str_wind = 'FULL' if wind==data.shape[0] else wind
-        final_fname = fullpath[:-4] + '_W' + str(nperseg) + '_norm' + str(str_wind)
+        final_fname = fullpath[:-4] + '_mk0' + '_W' + str(nperseg) + '_norm' + str(str_wind)
         np.save(final_fname, final_data)
 
+
+
+#-----------------------
+def preprocess_all_mk1(norm_wind=None,
+                       div_factor=300,
+                       mode='train',
+                       disp=True):
+    """Preprocesses all the data.
+    Simply scales the data with div_factor, then applies running zeromean"""
+    csvlist = io.get_file_list(mode=mode, fullpath=True)
+    pif = lambda msg: printflush(msg) if disp else None
+
+    for fullpath in csvlist:
+        t0 = time()
+        fpath, fname = os.path.split(fullpath)
+        data = pd.read_csv(fullpath).values[:,1:]
+        pif('Processing ' + fname + ' -- ' + str(data.shape[0]) + ' samples...')
+
+        # Scale the data
+        data /= float(div_factor)
+
+        # Execute the running mean
+        if norm_wind is not None:
+            wind = norm_wind
+        else:
+            wind = data.shape[0]
+        final_data = utils.running_zeromean(data, wind, axis=0)
+        pif("\b" + "%.3f"%(time()-t0) + " s\n")
+
+        str_wind = 'FULL' if wind==data.shape[0] else str(wind)
+        final_fname = fullpath[:-4] + '_mk1_norm' + str_wind
+        np.save(final_fname, final_data)
 
 
 
@@ -152,8 +185,8 @@ def smoothening(X_raw, normalize=True, window_size=300, downsample=1):
 if __name__ == '__main__':
     t0 = time()
 
-    preprocess_all(mode='test')
-    preprocess_all(mode='train')
+    preprocess_all_mk1(mode='test')
+    preprocess_all_mk1(mode='train')
     #make_all_spectrographs()
 
 
