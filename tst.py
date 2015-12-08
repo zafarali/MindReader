@@ -1,26 +1,31 @@
+
 import numpy as np
-import matplotlib.pyplot as plt
-import IOutils
-import preprocessing.preprocess_utils as utils
-from preprocessing.preprocessing import preprocess_sample
-
-ds = IOutils.data_streamer(num_sets=2)
-X, Y = ds.next()
-
-X = X[:, [3,4]]
-# single_channel = X[:,0]
-# x = utils.window_generator_1D(single_channel[:50], window_size=10)
-# i = 0
-# for a in x:
-#     print i,a
-#     i+=1
 
 
+def swapcols(arr, cols):
+    """Swaps the columns from the cols tuple. expect cols = (col0, col1)"""
+    tmp = arr[:,cols[0]].copy()
+    arr[:,cols[0]] = arr[:,cols[1]]
+    arr[:,cols[1]] = tmp
 
-X_processed = preprocess_sample(X, filters=['SMR'])
 
-# plt.plot(X)
-# plt.plot(X_processed)
-# plt.show()
-print X_processed
-print X_processed.shape
+assoc = [
+    [0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 0, 0, 0],
+    [0, 1, 1, 1, 0, 0],
+    [1, 0, 0, 0, 0, 0],
+    [0, 0, 1, 0, 0, 0],
+    [0, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 1, 1],
+    [0, 0, 1, 1, 0, 0],
+    [0, 0, 0, 1, 0, 0],
+    [0, 1, 0, 1, 0, 0],
+    [0, 0, 0, 0, 0, 1],
+    [0, 0, 0, 0, 1, 0]
+]
+
+
+arr = np.array(assoc)
+
+print(arr)
+

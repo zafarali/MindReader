@@ -179,7 +179,7 @@ def mov_avg(X, N, axis=0):
 
 
 #------------------------
-def running_normalization(X, N, axis=0):
+def running_zeromean(X, N, axis=0):
     """Removes the running average of up to the last N samples from the current sample"""
     if X.shape[0] == N:
         csum = X.cumsum(axis=0)
