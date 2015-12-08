@@ -49,9 +49,9 @@ class Source:
 
     def load_raw_data(self, subject, series):
         raw_data = [self.read_csv(self.path(subject, i, "data")) for i in series]
-        self.data = np.concatenate(raw_data, axis=0)
+        self.data = np.concatenate(raw_data, axis=0).astype(np.float32)
         raw_events = [self.read_csv(self.path(subject, i, "events")) for i in series]
-        self.events = np.concatenate(raw_events, axis=0)
+        self.events = np.concatenate(raw_events, axis=0).astype(np.int32)
     
     def normalize(self):
         self.data -= self.mean
