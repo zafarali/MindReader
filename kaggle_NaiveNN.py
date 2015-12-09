@@ -451,7 +451,9 @@ if __name__ == "__main__":
             test_series_ids=range(8,9), train_sample_size=TRAIN_SIZE2, max_epochs=MAX_EPOCH)
     elif MODE == 'cross':
         print 'Training cross patient classifier'
-        Y_true, Y_pred = train_cross_subject(create_net, )
+        Y_true, Y_pred = train_cross_subject(create_net, range(1,9), range(1,5), \
+            range(9,11), range(2,3), max_epochs=MAX_EPOCH, \
+            train_sample_size=TRAIN_SIZE2)
 
 
     print 'multiple_auc:',multiple_auc(Y_true, Y_pred)
