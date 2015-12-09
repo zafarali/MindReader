@@ -137,10 +137,10 @@ class LayerFactory:
         return (name, layer) 
 
 
-SAMPLE_SIZE = 512 # Larger (2048 perhaps) would be better
+SAMPLE_SIZE = 2048 # Larger (2048 perhaps) would be better
 # We are downsample without low-pass filtering here. You should probably filter
 # to avoid aliading of the data.
-DOWNSAMPLE = 8 
+DOWNSAMPLE = 3
 TIME_POINTS = SAMPLE_SIZE // DOWNSAMPLE
     
 class IndexBatchIterator(BatchIterator):
@@ -349,7 +349,7 @@ def train_subject_specific(factory, subject_id, train_series_ids, test_series_id
     val_indices = np.arange(len(val_source.events))
 
     print len(val_source.events)
-    raw_input()
+    # raw_input()
     test_net = factory(val_source, test_source)
 
     test_net.load_weights_from(params)
@@ -384,8 +384,8 @@ def make_submission(train_info, name):
         
 if __name__ == "__main__":
     # train_info = train_all(create_net, max_epochs=25) # Training for longer would likley be better
-    Y_true, Y_pred = train_subject_specific(create_net, subject_id=[ 2 ], train_series_ids=range(2,9), \
-        test_series_ids=range(1,2), train_sample_size=50, max_epochs=10)
+    Y_true, Y_pred = train_subject_specific(create_net, subject_id=[ 2 ], train_series_ids=range(1,8), \
+        test_series_ids=range(8,9), train_sample_size=1000, max_epochs=50)
     print 'multiple_auc:',multiple_auc(Y_true, Y_pred)
     print classification_report(Y_true, Y_pred)
     print confusion_matrix(Y_true, Y_pred)
