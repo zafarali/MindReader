@@ -3,7 +3,7 @@ import csv
 # at home, you can tweak the parameters as described in the Discussion
 # to get 0.90+
 
-
+import sys
 import numpy as np
 import scipy
 import pandas
@@ -16,7 +16,7 @@ from nolearn.lasagne import BatchIterator, NeuralNet
 from lasagne.objectives import aggregate, categorical_crossentropy
 from lasagne import layers
 import lasagne
-from lasagne.updates import adagrad
+from lasagne.updates import nesterov_momentum
 from theano.tensor.nnet import sigmoid
 import gc
 from metrics.custom import multiple_auc
@@ -208,7 +208,7 @@ def create_net(train_source, test_source, batch_size=128, max_epochs=20):
     batch_iter_test  = IndexBatchIterator(test_source, batch_size=batch_size)
     LF = LayerFactory()
 
-    dense = 196 # larger (1024 perhaps) would be better
+    # dense = 196 # larger (1024 perhaps) would be better
     
     layer_list = [
         LF(layers.InputLayer, shape=(None, N_ELECTRODES, TIME_POINTS)), 
@@ -219,7 +219,7 @@ def create_net(train_source, test_source, batch_size=128, max_epochs=20):
         # # also increase stability. This was 8 in an earlier version.
         # LF(Conv1DLayer, num_filters=4, filter_size=1, nonlinearity=None),
         # # Try one convolutional layer
-        # LF(Conv1DLayer, num_filters=8, filter_size=5, border_mode="same"),
+        # LF(Conv1DLayer, num_filters=8, filter_size=5, nonlinearity=lasagne.nonlinearities.softmax),
         # # Maxpooling is more typically done with a pool_size of 2
         # LF(MaxPool1DLayer, pool_size=4),
         # # Standard fully connected net from here on out.
@@ -233,9 +233,10 @@ def create_net(train_source, test_source, batch_size=128, max_epochs=20):
         LF(layers.Conv1DLayer, 'conv1', num_filters=6, filter_size=5, nonlinearity=None, pad='same'),
         LF(layers.Conv1DLayer, 'conv2', num_filters=3, filter_size=2),
         LF(layers.MaxPool1DLayer, 'maxpool1', pool_size=4),
-        LF(layers.DenseLayer, 'dense1', num_units=300),
+        LF(layers.DenseLayer, 'dense1', num_units=1024),
         LF(layers.DropoutLayer, 'drop2', p=0.5),
-
+        LF(layers.DenseLayer, 'dense2', num_units=512),
+        LF(layers.DropoutLayer, 'drop3', p=0.5),
         LF(layers.DenseLayer, layer_name="output", num_units=N_EVENTS, nonlinearity=lasagne.nonlinearities.softmax)
     ]
     
@@ -250,7 +251,8 @@ def create_net(train_source, test_source, batch_size=128, max_epochs=20):
         batch_iterator_test = batch_iter_test,
         max_epochs=max_epochs,
         verbose=1000000,
-        update = adagrad, 
+        update = nesterov_momentum,
+        update_momentum=0.9, 
         update_learning_rate = 0.01,
         # update_momentum = 0.5,
         **LF.kwargs
@@ -311,6 +313,51 @@ def train_all(factory, max_epochs=30, init_epochs=30, valid_series=[1,2]):
 
 from collections import Counter
 
+def train_cross_subject(factory, train_subject_ids, train_series_ids, test_subject_ids, test_series_ids, max_epochs=30, train_sample_size=0):
+    toval = 1
+    train_series_ids = sorted(set(train_series_ids) - set([toval]))
+    params = None
+    for subject in train_subject_ids:
+        train_source = TrainSource(subject_id, train_series_ids)
+        test_source = TestSource(subject_id, [toval], train_source)
+        net = factory(train_source, test_source, max_epochs=max_epochs)
+        if params is not None:
+            net.load_weights_from(params)
+
+        train_indices = np.zeros(train_sample_size, dtype=np.int32) -1
+
+        net.fit(train_indices, train_indices)
+
+        params = net.get_all_params_values()
+
+    del train_source
+    # del test_source
+
+
+    # net.predict_proba
+    val_source = TrainSource(test_subject_ids, test_series_ids)
+    # source = net.batch_iterator_test.source
+
+    val_indices = np.arange(len(val_source.events))
+
+    np.random.shuffle(val_indices)
+
+    print len(val_source.events)
+
+    net = factory(val_source, test_source)
+
+    net.load_weights_from(params)
+
+    predicted = net.predict(val_indices[:SAMPLE_SIZE])
+    actual = net.events[val_indices[:SAMPLE_SIZE]]
+
+    print 'unique predicted labels:',np.unique(predicted)
+    print 'unique actual labels',np.unique(actual)
+
+    return actual, predicted
+
+
+
 def train_subject_specific(factory, subject_id, train_series_ids, test_series_ids, max_epochs=30, init_epochs=0, train_sample_size=0):
     info = {}
     params = None
@@ -318,7 +365,6 @@ def train_subject_specific(factory, subject_id, train_series_ids, test_series_id
     # print toval
     toval = 1 # for now fix this
     # print train_series_ids
-    train_series_ids = sorted(set(train_series_ids) - set([toval]))
     # print train_series_ids
     train_source = TrainSource(subject_id, train_series_ids)
     test_source = TestSource(subject_id, [toval] , train_source) # just a place holder
@@ -385,9 +431,29 @@ def make_submission(train_info, name):
         
         
 if __name__ == "__main__":
-    # train_info = train_all(create_net, max_epochs=25) # Training for longer would likley be better
-    Y_true, Y_pred = train_subject_specific(create_net, subject_id=[ 2 ], train_series_ids=range(1,8), \
-        test_series_ids=range(8,9), train_sample_size=TRAIN_SIZE, max_epochs=50)
+
+    if len(sys.argv) < 3:
+        print """
+            Arguments are as follows:
+                MODEL: 'per' or 'cross'
+                MAX_EPOCH: the number of epochs to train with
+                TRAIN_SIZE: the size of the samples to train each epoch with 
+        """
+        raise Exception('not enough arguments')
+
+    MODE = sys.argv[1] # cross vs per
+    MAX_EPOCH = int(sys.argv[2]) # max epochs
+    TRAIN_SIZE2 = int(sys.argv[3]) # the sample size to train with 
+    if MODE == 'per':
+        print 'Training per patient classifier'
+        # train_info = train_all(create_net, max_epochs=25) # Training for longer would likley be better
+        Y_true, Y_pred = train_subject_specific(create_net, subject_id=[ 2 ], train_series_ids=range(1,8), \
+            test_series_ids=range(8,9), train_sample_size=TRAIN_SIZE2, max_epochs=MAX_EPOCH)
+    elif MODE == 'cross':
+        print 'Training cross patient classifier'
+        Y_true, Y_pred = train_cross_subject(create_net, )
+
+
     print 'multiple_auc:',multiple_auc(Y_true, Y_pred)
     print classification_report(Y_true, Y_pred)
     print confusion_matrix(Y_true, Y_pred)
