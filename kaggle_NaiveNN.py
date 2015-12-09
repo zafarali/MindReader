@@ -323,8 +323,8 @@ def train_cross_subject(factory, train_subject_ids, train_series_ids, test_subje
     train_series_ids = sorted(set(train_series_ids) - set([toval]))
     params = None
     for subject in train_subject_ids:
-        train_source = TrainSource(subject_id, train_series_ids)
-        test_source = TestSource(subject_id, [toval], train_source)
+        train_source = TrainSource(subject, train_series_ids)
+        test_source = TestSource(subject, [toval], train_source)
         net = factory(train_source, test_source, max_epochs=max_epochs)
         if params is not None:
             net.load_weights_from(params)
