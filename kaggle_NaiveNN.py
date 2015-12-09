@@ -182,16 +182,20 @@ class IndexBatchIterator(BatchIterator):
             sample = self.augmented[ndx:ndx+SAMPLE_SIZE]
             # Reverse so we get most recent point, otherwise downsampling drops the last
             # DOWNSAMPLE-1 points.
-            # print '---'
-            # print 'i=',i
-            # print 'ndx=',ndx
-            # print 'X[i].shape=',X[i].shape
-            
-            # print 'sample.shape=',sample.shape
-            # print 'sample[::-1].shape=',sample[::-1].shape
+            try:
+                X[i] = sample[::-1][::DOWNSAMPLE].transpose()
+            except Exception as e:
+                print e
+                print '---'
+                print 'i=',i
+                print 'ndx=',ndx
+                print 'X[i].shape=',X[i].shape
+                
+                print 'sample.shape=',sample.shape
+                print 'sample[::-1].shape=',sample[::-1].shape
 
-            # print 'sample[::-1][::DOWNSAMPLE].shape=',sample[::-1][::DOWNSAMPLE].shape
-            X[i] = sample[::-1][::DOWNSAMPLE].transpose()
+                print 'sample[::-1][::DOWNSAMPLE].shape=',sample[::-1][::DOWNSAMPLE].shape
+                continue
             if y_indices is not None:
                 Y[i] = self.source.events[ndx]
 
@@ -345,7 +349,7 @@ def train_cross_subject(factory, train_subject_ids, train_series_ids, test_subje
 
     print len(val_source.events)
 
-    net = factory(val_source, test_source)
+    net = factory(None, val_source)
 
     net.load_weights_from(params)
 
@@ -399,7 +403,7 @@ def train_subject_specific(factory, subject_id, train_series_ids, test_series_id
 
     print len(val_source.events)
 
-    test_net = factory(val_source, test_source)
+    test_net = factory(None, val_source)
 
     test_net.load_weights_from(params)
 
