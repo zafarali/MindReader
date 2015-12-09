@@ -348,13 +348,16 @@ def train_subject_specific(factory, subject_id, train_series_ids, test_series_id
 
     val_indices = np.arange(len(val_source.events))
 
+    np.random.shuffle(val_indices)
+
     print len(val_source.events)
+
     test_net = factory(val_source, test_source)
 
     test_net.load_weights_from(params)
 
-    predicted = test_net.predict(val_indices)
-    actual = val_source.events
+    predicted = test_net.predict(val_indices[:SAMPLE_SIZE])
+    actual = val_source.events[val_indices[:SAMPLE_SIZE]]
 
     print 'unique predicted labels:',np.unique(predicted)
     print 'unique actual labels',np.unique(actual)
