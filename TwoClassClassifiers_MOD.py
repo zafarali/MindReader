@@ -1,5 +1,7 @@
-
-# coding: utf-8
+"""
+	2 class cross patient!!!!
+	this code runs LR and NN at the same time
+"""
 
 import numpy as np
 import IOutils
@@ -19,8 +21,10 @@ vt = IOutils.VectorTransformer()
 
 # NaivB = GaussianNB()
 lr = LogisticRegression(class_weight="auto")
-#svc = svm.SVC(kernel='rbf',C=10,class_weight="auto")
 
+#svc = svm.SVC(kernel='rbf',C=10,class_weight="auto")
+#=======
+# svc = svm.SVC(kernel='rbf',C=10,class_weight="auto")
 for X_next, Y_next in ds:
 	X_next = X_next.astype(np.float)/X_next.max()
 	X_next[np.isnan(X_next)]=0
@@ -48,7 +52,6 @@ for X_next, Y_next in ds:
 	# linear.fit(X_next, Y_next)
 	nn.fit(X_next, Y_next)
 	lr.fit(X_next, Y_next)
-#	svc.fit(X_next, Y_next)
 
 
 
@@ -56,7 +59,6 @@ for X_next, Y_next in ds:
 
 ds2 = IOutils.data_streamer2(keeplist=[(12,0)])
 X_valid, Y_valid = ds2.next()
-
 # use as follows: 
 Y_valid = vt.transform(Y_valid)
 
@@ -88,6 +90,7 @@ print 'F1 Score:',f1_score(Y_valid, predicted, average='weighted')
 print 'classification_report:', classification_report(Y_valid, predicted)
 
 
+#<<<<<<< HEAD
 #print 'SVC'
 #predicted = svc.predict(X_valid)   
 #correct = predicted == Y_valid
@@ -97,6 +100,17 @@ print 'classification_report:', classification_report(Y_valid, predicted)
 #print 'Precision:' ,precision_score(Y_valid, predicted, average='weighted')  
 #print 'F1 Score:',f1_score(Y_valid, predicted, average='weighted') 
 #print 'classification_report:', classification_report(Y_valid, predicted)
+#=======
+# print 'SVC'
+# predicted = svc.predict(X_valid)   
+# correct = predicted == Y_valid
+# print ' correct: ', np.sum(correct)/float(len(correct))
+# print confusion_matrix(Y_valid, predicted)
+# print 'Recall:' ,recall_score(Y_valid, predicted, average='weighted')
+# print 'Precision:' ,precision_score(Y_valid, predicted, average='weighted')  
+# print 'F1 Score:',f1_score(Y_valid, predicted, average='weighted') 
+# print 'classification_report:', classification_report(Y_valid, predicted)
+#>>>>>>> 6ed240f78c770870351bf8730dcb3b42b7801de7
 
 
 
