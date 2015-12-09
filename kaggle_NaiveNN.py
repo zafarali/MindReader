@@ -250,6 +250,7 @@ def create_net(train_source, test_source, batch_size=128, max_epochs=20):
         batch_iterator_train = batch_iter_train,
         batch_iterator_test = batch_iter_test,
         max_epochs=max_epochs,
+        custom_score=('average auc', multiple_auc),
         verbose=1000000,
         update = nesterov_momentum,
         update_momentum=0.9, 

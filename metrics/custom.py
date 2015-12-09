@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.metrics import roc_auc_score
 
-def multiple_auc(Y_actual, Y_pred):
+def multiple_auc(Y_actual, Y_pred, return_individual=False):
     """
         Calculates the averaged ROC for each class
         @params:
@@ -30,5 +30,8 @@ def multiple_auc(Y_actual, Y_pred):
         Y_p[Y_p == -1] = 1
         roc_aucs[label] = roc_auc_score(Y_a, Y_p)
     averaged_roc = np.mean(roc_aucs.values())
-    return roc_aucs, averaged_roc
+    if return_individual:
+        return roc_aucs, averaged_roc
+    else:
+        return averaged_roc
     
