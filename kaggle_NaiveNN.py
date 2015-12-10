@@ -216,24 +216,6 @@ def create_net(train_source, test_source, batch_size=128, max_epochs=20, learnin
     
     layer_list = [
         LF(layers.InputLayer, shape=(None, N_ELECTRODES, TIME_POINTS)), 
-        # LF(DropoutLayer, p=0.5),
-        # # This first layer condenses N_ELECTRODES down to num_filters.
-        # # Since the electrode results are reportedly highly reduntant this
-        # # should speed things up without sacrificing accuracy. It may
-        # # also increase stability. This was 8 in an earlier version.
-        # LF(Conv1DLayer, num_filters=4, filter_size=1, nonlinearity=None),
-        # # Try one convolutional layer
-        # LF(Conv1DLayer, num_filters=8, filter_size=5, nonlinearity=lasagne.nonlinearities.softmax),
-        # # Maxpooling is more typically done with a pool_size of 2
-        # LF(MaxPool1DLayer, pool_size=4),
-        # # Standard fully connected net from here on out.
-        # LF(DropoutLayer, p=0.5),
-        # LF(DenseLayer, num_units=dense),
-        # LF(DropoutLayer, p=0.5),
-        # LF(DenseLayer, num_units=dense),
-        # LF(DropoutLayer, p=0.5),
-
-
         LF(layers.Conv1DLayer, 'conv1', num_filters=6, filter_size=5, nonlinearity=None, pad='same'),
         LF(layers.Conv1DLayer, 'conv2', num_filters=3, filter_size=2),
         LF(layers.MaxPool1DLayer, 'maxpool1', pool_size=4),
@@ -254,7 +236,7 @@ def create_net(train_source, test_source, batch_size=128, max_epochs=20, learnin
         batch_iterator_train = batch_iter_train,
         batch_iterator_test = batch_iter_test,
         max_epochs=max_epochs,
-        custom_score=('average auc', multiple_auc),
+        # custom_score=('average auc', multiple_auc),
         verbose=1000000,
         update = nesterov_momentum,
         update_momentum=0.9, 
@@ -265,7 +247,95 @@ def create_net(train_source, test_source, batch_size=128, max_epochs=20, learnin
 
     return nnet
 
+def create_net2(train_source, test_source, batch_size=128, max_epochs=20, learning_rate = 0.1): 
+    
+    batch_iter_train = IndexBatchIterator(train_source, batch_size=batch_size)
+    batch_iter_test  = IndexBatchIterator(test_source, batch_size=batch_size)
+    LF = LayerFactory()
 
+    # dense = 196 # larger (1024 perhaps) would be better
+    
+    layer_list = [
+        LF(layers.InputLayer, shape=(None, N_ELECTRODES, TIME_POINTS)), 
+        LF(layers.DenseLayer, 'dense1', num_units=2048),
+        LF(layers.DropoutLayer, 'drop1', p=0.5),
+        LF(layers.DenseLayer, 'dense2', num_units=1024),
+        LF(layers.DropoutLayer, 'drop2', p=0.5),
+        LF(layers.DenseLayer, 'dense3', num_units=512),
+        LF(layers.DropoutLayer, 'drop3', p=0.5),
+        LF(layers.DenseLayer, layer_name="output", num_units=N_EVENTS, nonlinearity=lasagne.nonlinearities.softmax)
+    ]
+    
+    # def loss(x,t):
+    #     return aggregate(categorical_crossentropy(x, t))
+    
+    
+    nnet =  NeuralNet(
+        # y_tensor_type = theano.tensor.matrix,
+        layers = layer_list,
+        batch_iterator_train = batch_iter_train,
+        batch_iterator_test = batch_iter_test,
+        max_epochs=max_epochs,
+        # custom_score=('average auc', multiple_auc),
+        verbose=1000000,
+        update = nesterov_momentum,
+        update_momentum=0.9, 
+        update_learning_rate = learning_rate,
+        # update_momentum = 0.5,
+        **LF.kwargs
+        )
+
+    return nnet
+
+def create_net3(train_source, test_source, batch_size=128, max_epochs=20, learning_rate = 0.1): 
+    
+    batch_iter_train = IndexBatchIterator(train_source, batch_size=batch_size)
+    batch_iter_test  = IndexBatchIterator(test_source, batch_size=batch_size)
+    LF = LayerFactory()
+
+    # dense = 196 # larger (1024 perhaps) would be better
+    
+    layer_list = [
+        LF(layers.InputLayer, shape=(None, N_ELECTRODES, TIME_POINTS)), 
+        # LF(DropoutLayer, p=0.5),
+        # # This first layer condenses N_ELECTRODES down to num_filters.
+        # # Since the electrode results are reportedly highly reduntant this
+        # # should speed things up without sacrificing accuracy. It may
+        # # also increase stability. This was 8 in an earlier version.
+        # LF(Conv1DLayer, num_filters=4, filter_size=1, nonlinearity=None),
+        # # Try one convolutional layer
+        # LF(Conv1DLayer, num_filters=8, filter_size=5, nonlinearity=lasagne.nonlinearities.softmax),
+        # # Maxpooling is more typically done with a pool_size of 2
+        # LF(MaxPool1DLayer, pool_size=4),
+        # # Standard fully connected net from here on out.
+        # LF(DropoutLayer, p=0.5),
+        # LF(DenseLayer, num_units=dense),
+        # LF(DropoutLayer, p=0.5),
+        # LF(DenseLayer, num_units=dense),
+        # LF(DropoutLayer, p=0.5),
+        LF(layers.DenseLayer, layer_name="output", num_units=N_EVENTS, nonlinearity=lasagne.nonlinearities.softmax)
+    ]
+    
+    # def loss(x,t):
+    #     return aggregate(categorical_crossentropy(x, t))
+    
+    
+    nnet =  NeuralNet(
+        # y_tensor_type = theano.tensor.matrix,
+        layers = layer_list,
+        batch_iterator_train = batch_iter_train,
+        batch_iterator_test = batch_iter_test,
+        max_epochs=max_epochs,
+        # custom_score=('average auc', multiple_auc),
+        verbose=1000000,
+        update = nesterov_momentum,
+        update_momentum=0.9, 
+        update_learning_rate = learning_rate,
+        # update_momentum = 0.5,
+        **LF.kwargs
+        )
+
+    return nnet
 # Do the training.
 
 train_indices = np.zeros([TRAIN_SIZE], dtype=int) - 1
@@ -439,13 +509,14 @@ def make_submission(train_info, name):
         
 if __name__ == "__main__":
 
-    if len(sys.argv) < 4:
+    if len(sys.argv) < 5:
         print """
             Arguments are as follows:
                 MODEL: 'per' or 'cross'
                 MAX_EPOCH: the number of epochs to train with
                 TRAIN_SIZE: the size of the samples to train each epoch with 
                 LEARNING_RATE: the rate of learning
+                ARCHITECTURE: 1 Basic CNN,2 NN, 3 CNN-new
         """
         raise Exception('not enough arguments')
 
@@ -453,14 +524,22 @@ if __name__ == "__main__":
     MAX_EPOCH = int(sys.argv[2]) # max epochs
     TRAIN_SIZE2 = int(sys.argv[3]) # the sample size to train with 
     LEARNING_RATE = float(sys.argv[4])
+    ARCHITECTURE = int(sys.argv[5])
+    if ARCHITECTURE == 1:
+        net = create_net
+    elif ARCHITECTURE == 2:
+        net = create_net2
+    else:
+        net = create_net3
+
     if MODE == 'per':
         print 'Training per patient classifier'
         # train_info = train_all(create_net, max_epochs=25) # Training for longer would likley be better
-        Y_true, Y_pred = train_subject_specific(create_net, subject_id=[ 2 ], train_series_ids=range(1,8), \
+        Y_true, Y_pred = train_subject_specific(net, subject_id=[ 2 ], train_series_ids=range(1,8), \
             test_series_ids=range(8,9), train_sample_size=TRAIN_SIZE2, max_epochs=MAX_EPOCH, learning_rate=LEARNING_RATE)
     elif MODE == 'cross':
         print 'Training cross patient classifier'
-        Y_true, Y_pred = train_cross_subject(create_net, range(1,9), range(1,5), \
+        Y_true, Y_pred = train_cross_subject(net, range(1,9), range(1,5), \
             range(9,11), range(2,3), max_epochs=MAX_EPOCH, \
             train_sample_size=TRAIN_SIZE2, learning_rate=LEARNING_RATE)
 
