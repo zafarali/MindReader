@@ -313,6 +313,16 @@ def create_net3(train_source, test_source, batch_size=128, max_epochs=20, learni
         # LF(DropoutLayer, p=0.5),
         # LF(DenseLayer, num_units=dense),
         # LF(DropoutLayer, p=0.5),
+        LF(layers.Conv1DLayer, 'conv1', num_filters=50, filter_size=10, pad='same'),
+        LF(layers.Conv1DLayer, 'conv2', num_filters=30, filter_size=4),
+        LF(layers.MaxPool1DLayer, 'maxpool1', pool_size=8),
+        LF(layers.Conv1DLayer, 'conv3', num_filters=4, filter_size=2),
+        LF(layers.MaxPool1DLayer, 'maxpool2', pool_size=5),
+        LF(layers.DenseLayer, 'dense1', num_units=1024),
+        LF(layers.DropoutLayer, 'drop1', p=0.5),
+        LF(layers.DenseLayer, 'dense2', num_units=512),
+        LF(layers.DropoutLayer, 'drop2', p=0.5),
+
         LF(layers.DenseLayer, layer_name="output", num_units=N_EVENTS, nonlinearity=lasagne.nonlinearities.softmax)
     ]
     
