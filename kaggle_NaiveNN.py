@@ -206,7 +206,7 @@ class IndexBatchIterator(BatchIterator):
 
 # Simple / Naive net. Borrows from Daniel Nouri's Facial Keypoint Detection Tutorial 
 
-def create_net(train_source, test_source, batch_size=128, max_epochs=20): 
+def create_net(train_source, test_source, batch_size=128, max_epochs=20, learning_rate = 0.1): 
     
     batch_iter_train = IndexBatchIterator(train_source, batch_size=batch_size)
     batch_iter_test  = IndexBatchIterator(test_source, batch_size=batch_size)
@@ -258,7 +258,7 @@ def create_net(train_source, test_source, batch_size=128, max_epochs=20):
         verbose=1000000,
         update = nesterov_momentum,
         update_momentum=0.9, 
-        update_learning_rate = 0.01,
+        update_learning_rate = learning_rate,
         # update_momentum = 0.5,
         **LF.kwargs
         )
@@ -318,14 +318,15 @@ def train_all(factory, max_epochs=30, init_epochs=30, valid_series=[1,2]):
 
 from collections import Counter
 
-def train_cross_subject(factory, train_subject_ids, train_series_ids, test_subject_ids, test_series_ids, max_epochs=30, train_sample_size=0):
+def train_cross_subject(factory, train_subject_ids, train_series_ids, test_subject_ids, \
+    test_series_ids, max_epochs=30, train_sample_size=0, learning_rate = 0.1):
     toval = 1
     train_series_ids = sorted(set(train_series_ids) - set([toval]))
     params = None
     for subject in train_subject_ids:
         train_source = TrainSource(subject, train_series_ids)
         test_source = TestSource(subject, [toval], train_source)
-        net = factory(train_source, test_source, max_epochs=max_epochs)
+        net = factory(train_source, test_source, max_epochs=max_epochs, learning_rate=learning_rate)
         if params is not None:
             net.load_weights_from(params)
 
@@ -363,7 +364,8 @@ def train_cross_subject(factory, train_subject_ids, train_series_ids, test_subje
 
 
 
-def train_subject_specific(factory, subject_id, train_series_ids, test_series_ids, max_epochs=30, init_epochs=0, train_sample_size=0):
+def train_subject_specific(factory, subject_id, train_series_ids, test_series_ids, \
+    max_epochs=30, init_epochs=0, train_sample_size=0, learning_rate = 0.1):
     info = {}
     params = None
     # toval = int(np.random.choice(train_series_ids))
@@ -374,7 +376,7 @@ def train_subject_specific(factory, subject_id, train_series_ids, test_series_id
     train_source = TrainSource(subject_id, train_series_ids)
     test_source = TestSource(subject_id, [toval] , train_source) # just a place holder
     # i don't think it really does anything when line 265 is commented out
-    net = factory(train_source, test_source, max_epochs=max_epochs)
+    net = factory(train_source, test_source, max_epochs=max_epochs, learning_rate=learning_rate)
     
     if train_sample_size == 0:
         train_sample_size = len(train_source.events)
@@ -437,28 +439,30 @@ def make_submission(train_info, name):
         
 if __name__ == "__main__":
 
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 4:
         print """
             Arguments are as follows:
                 MODEL: 'per' or 'cross'
                 MAX_EPOCH: the number of epochs to train with
                 TRAIN_SIZE: the size of the samples to train each epoch with 
+                LEARNING_RATE: the rate of learning
         """
         raise Exception('not enough arguments')
 
     MODE = sys.argv[1] # cross vs per
     MAX_EPOCH = int(sys.argv[2]) # max epochs
     TRAIN_SIZE2 = int(sys.argv[3]) # the sample size to train with 
+    LEARNING_RATE = float(sys.argv[4])
     if MODE == 'per':
         print 'Training per patient classifier'
         # train_info = train_all(create_net, max_epochs=25) # Training for longer would likley be better
         Y_true, Y_pred = train_subject_specific(create_net, subject_id=[ 2 ], train_series_ids=range(1,8), \
-            test_series_ids=range(8,9), train_sample_size=TRAIN_SIZE2, max_epochs=MAX_EPOCH)
+            test_series_ids=range(8,9), train_sample_size=TRAIN_SIZE2, max_epochs=MAX_EPOCH, learning_rate=LEARNING_RATE)
     elif MODE == 'cross':
         print 'Training cross patient classifier'
         Y_true, Y_pred = train_cross_subject(create_net, range(1,9), range(1,5), \
             range(9,11), range(2,3), max_epochs=MAX_EPOCH, \
-            train_sample_size=TRAIN_SIZE2)
+            train_sample_size=TRAIN_SIZE2, learning_rate=LEARNING_RATE)
 
 
     print 'multiple_auc:',multiple_auc(Y_true, Y_pred)
