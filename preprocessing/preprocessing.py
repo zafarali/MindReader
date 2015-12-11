@@ -225,8 +225,11 @@ def preprocess_all_mk3(mode='train',
         # TODO
         # Filter the data 
         brain_list = []
+        freq_mask = 0
         for flo, fhi in utils.FREQUENCY_BANDS.itervalues():
             brain_list.append(utils.butter_apply(data, low=flo, high=fhi))
+            freq_mask = int(round(flo+fhi*10))
+
 
         del data #Free some memory!
         final_data = np.concatenate(brain_list, axis=1)
@@ -235,7 +238,7 @@ def preprocess_all_mk3(mode='train',
 
         # Save preprocessed data and print stuff to console
         str_wind = 'FULL' if wind==final_data.shape[0] else str(wind)
-        final_fname = fullpath[:-4] + '_mk3_wind' + str_wind
+        final_fname = fullpath[:-4] + '_mk3_wind' + str_wind + '_fmask' + str(freq_mask)
         np.save(final_fname, final_data)
         del brain_list, final_data # Free some memory for the next datafile
 
