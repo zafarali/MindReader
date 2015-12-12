@@ -85,4 +85,7 @@ print 'F1 Score:',f1_score(Y_test, predicted, average='weighted')
 
 print 'Multiple:', custom.multiple_auc(Y_test, predicted)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> ac195d198eac27320f60507608881b9c0e4bed2a

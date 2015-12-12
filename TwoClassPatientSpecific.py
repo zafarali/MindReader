@@ -16,7 +16,7 @@ from collections import Counter
 import sys
 
 
-    
+   
     
 # NUM_ZERO_METRIC = sys.argv[3]
 # obtain the first 7 datas for the 2nd subject

@@ -14,6 +14,10 @@ from scipy import signal
 from time import time
 
 
+DTYPE = np.float32
+
+
+
 #---------------------------
 def preprocess_sample(X_raw, normalize=True, filters=utils.FREQUENCY_BANDS.keys(), window_size=300, downsample=1, shuffle=True):
 
@@ -77,6 +81,7 @@ def preprocess_all_mk0(norm_wind=None,
 
     pif = lambda msg: printflush(msg) if disp else None
 
+    pif('MK0 preprocessing')
 
     for fullpath in csvlist:
         t0 = time()
@@ -132,6 +137,8 @@ def preprocess_all_mk1(norm_wind=None,
     csvlist = io.get_file_list(mode=mode, fullpath=True)
     pif = lambda msg: printflush(msg) if disp else None
 
+    pif('MK1 preprocessing')
+
     for fullpath in csvlist:
         t0 = time()
         fpath, fname = os.path.split(fullpath)
@@ -156,7 +163,123 @@ def preprocess_all_mk1(norm_wind=None,
 
 
 
+#----------------------
+def preprocess_all_mk2(mode='train',
+                       disp=True):
+    """Preprocesses all the data.
+    Mean cancellation by subtracting SENSOR_MEAN and scaling with SENSOR_STD"""
+    csvlist = io.get_file_list(mode=mode, fullpath=True)
+    pif = lambda msg: printflush(msg) if disp else None
 
+    pif('MK2 preprocessing for ' + mode + ' data\n')
+    
+    for fullpath in csvlist:
+        t0 = time()
+        fpath, fname = os.path.split(fullpath)
+        data = pd.read_csv(fullpath).values[:,1:]
+        pif('Processing ' + fname + ' -- ' + str(data.shape[0]) + ' samples...')
+
+        # Removes the mean of each sensor
+        data -= utils.SENSOR_MEAN
+        
+        # Scale the data with the standard deviation from the training data
+        data /= utils.SENSOR_STD
+
+        final_fname = fullpath[:-4] + '_mk2'
+        np.save(final_fname, data)
+
+        pif("%.3f"%(time()-t0) + " s\n")
+
+
+
+#----------------------
+# NOT READY FOR USE
+def preprocess_all_mk3(mode='train',
+                       wind=3,
+                       butter_order=4,
+                       disp=True):
+    """Preprocesses all the data.
+    Mean cancellation by subtracting SENSOR_MEAN and scaling with SENSOR_STD
+    an MA filter is used to reduce the impact of high frequency noise
+    """
+    csvlist = io.get_file_list(mode=mode, fullpath=True)
+    pif = lambda msg: printflush(msg) if disp else None
+
+    pif('MK3 preprocessing for ' + mode + ' data\n')
+    
+    for fullpath in csvlist:
+        t0 = time()
+        fpath, fname = os.path.split(fullpath)
+        data = pd.read_csv(fullpath).values[:,1:]
+        pif('Processing ' + fname + ' -- ' + str(data.shape[0]) + ' samples...')
+
+        # Removes the mean of each sensor
+        data -= utils.SENSOR_MEAN
+        
+        # Scale the data with the standard deviation from the training data
+        data /= utils.SENSOR_STD
+
+        # Moving average, to remove outliers
+        data = utils.mov_avg(data, wind, axis=0)
+
+        # TODO
+        # Filter the data 
+        brain_list = []
+        freq_mask = 0
+        for flo, fhi in utils.FREQUENCY_BANDS.itervalues():
+            brain_list.append(utils.butter_apply(data, low=flo, high=fhi))
+            freq_mask = int(round(flo+fhi*10))
+
+
+        del data #Free some memory!
+        final_data = np.concatenate(brain_list, axis=1)
+
+
+
+        # Save preprocessed data and print stuff to console
+        str_wind = 'FULL' if wind==final_data.shape[0] else str(wind)
+        final_fname = fullpath[:-4] + '_mk3_wind' + str_wind + '_fmask' + str(freq_mask)
+        np.save(final_fname, final_data)
+        del brain_list, final_data # Free some memory for the next datafile
+
+        pif("%.3f"%(time()-t0) + " s\n")
+
+
+#-----------------------
+def train_mean_std(disp=True):
+    """Outputs the mean and standard deviation of each sensor, for the training data ONLY"""
+    csvlist = io.get_file_list(mode='train', fullpath=True)
+    pif = lambda msg: printflush(msg) if disp else None
+
+    # Sum all the means and STD together
+    mean = np.zeros(32, dtype=DTYPE)
+    var = np.zeros(32, dtype=DTYPE)
+    for fullpath in csvlist:
+        t0 = time()
+        fpath, fname = os.path.split(fullpath)
+        data = pd.read_csv(fullpath).values[:,1:]
+        pif('Processing ' + fname + ' -- ' + str(data.shape[0]) + ' samples...')
+
+        mean += np.mean(data, axis=0, dtype=DTYPE)
+        var += np.var(data, axis=0, dtype=DTYPE)
+        pif("\b" + "%.3f"%(time()-t0) + " s\n")
+
+    # Divide by # of datasets
+    dataset_count = len(csvlist)
+    mean /= dataset_count
+    var /= dataset_count
+
+    # Sqrt the variance
+    std = np.sqrt(var)
+
+    # print representation 
+    print(repr(mean))
+    print(repr(std))
+
+
+
+
+   
 
 #-----------------------------
 def smoothening(X_raw, normalize=True, window_size=300, downsample=1):
@@ -185,9 +308,8 @@ def smoothening(X_raw, normalize=True, window_size=300, downsample=1):
 if __name__ == '__main__':
     t0 = time()
 
-    preprocess_all_mk1(mode='test')
-    preprocess_all_mk1(mode='train')
-    #make_all_spectrographs()
+    preprocess_all_mk3(mode='test')
+    preprocess_all_mk3(mode='train')
 
 
     
